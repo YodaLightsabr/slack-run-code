@@ -8,6 +8,8 @@ import SlackWebAPI from '@slack/web-api';
 const { App } = SlackBolt;
 const { WebClient } = SlackWebAPI;
 
+const cachedChannels = [];
+
 const app = new App({
     token: process.env.SLACK_BOT_TOKEN,
     appToken: process.env.SLACK_APP_TOKEN,
@@ -21,30 +23,13 @@ const pistonClient = piston({ server: "https://emkc.org" });
 let versions = {};
 let languages = [];
 
-app.message(async ({ message, say }) => {
+async function messageResponse ({ message, say, addReaction }) {
     const { loading, thumbsUp, failed, welcome } = staticReact();
 
     let language, code;
 
-    if (message.thread_ts && (message.thread_ts != message.ts)) return console.log('Ignoring threaded message');
-
-    if (message.subtype === 'channel_join') {
-        console.log('Reacting to and ignoring channel join message');
-
-        await web.reactions.add({
-            channel: message.channel,
-            timestamp: message.ts,
-            name: welcome
-        });
-        return;
-    }
-
-    if (message.subtype === 'message_changed') return console.log('Ignoring edited message'); // maybe implement in the future?
-    if (message.text && (message.text.startsWith('#') || message.text.startsWith('//'))) return console.log('Ignoring comment message');
-
-
     if (message.files && message.files[0] && message.files[0].url_private_download) {        
-        await web.reactions.add({
+        await addReaction({
             channel: message.channel,
             timestamp: message.ts,
             name: loading
@@ -109,7 +94,7 @@ app.message(async ({ message, say }) => {
                 ]
             }
 
-            await web.reactions.add({
+            await addReaction({
                 channel: message.channel,
                 timestamp: message.ts,
                 name: thumbsUp
@@ -124,7 +109,7 @@ app.message(async ({ message, say }) => {
         const isCodeRegex = /.*?(\n| |){1,3}```(.|\n)*?```/;
         if (isCodeRegex.test(message.text)) { // is a valid code snippet
 
-            await web.reactions.add({
+            await addReaction({
                 channel: message.channel,
                 timestamp: message.ts,
                 name: loading
@@ -137,7 +122,7 @@ app.message(async ({ message, say }) => {
             language = message.text.match(/.*/)[0];
 
         } else {
-            return await web.reactions.add({
+            return await addReaction({
                 channel: message.channel,
                 timestamp: message.ts,
                 name: failed
@@ -151,7 +136,7 @@ app.message(async ({ message, say }) => {
             timestamp: message.ts,
             name: loading
         });
-        web.reactions.add({
+        addReaction({
             channel: message.channel,
             timestamp: message.ts,
             name: failed
@@ -165,7 +150,7 @@ app.message(async ({ message, say }) => {
     });
 
     if (result.run.output) await web.files.upload({
-        thread_ts: message.ts,
+        thread_ts: message.thread_ts ? message.thread_ts : message.ts, // support for threaded shortcuts
         content: result.run.output,
         channels: message.channel,
         title: 'output.txt',
@@ -180,13 +165,63 @@ app.message(async ({ message, say }) => {
         name: loading
     });
 
-    web.reactions.add({
+    addReaction({
         channel: message.channel,
         timestamp: message.ts,
         name: thumbsUp
     });
+}
 
-    // say({ text: `🏓 Pong`, thread_ts: message.ts });
+app.message(async ({ message, say }) => {
+    if (message.channel != 'C03E0TFT649') return console.log('Ignoring unrelated message');
+    if (message.thread_ts && (message.thread_ts != message.ts)) return console.log('Ignoring threaded message');
+
+    if (message.subtype === 'channel_join') {
+        console.log('Reacting to and ignoring channel join message');
+
+        await web.reactions.add({
+            channel: message.channel,
+            timestamp: message.ts,
+            name: welcome
+        });
+        return;
+    }
+
+    if (message.subtype === 'message_changed') return console.log('Ignoring edited message'); // maybe implement in the future?
+    if (message.text && (message.text.startsWith('#') || message.text.startsWith('//'))) return console.log('Ignoring comment message');
+
+
+    await messageResponse({ message, say, addReaction: web.reactions.add });
+});
+
+app.shortcut('run_code', async ({ shortcut, ack, client, logger }) => {
+    console.log('Received shortcut');
+    await ack();
+    shortcut.message.channel = shortcut.channel.id;
+    if (!cachedChannels.includes(shortcut.channel.id)) { // it's okay if it warns you're in the channel once,
+        await web.conversations.join({         // but prevent it from happening twice to avoid ratelimits
+            channel: shortcut.channel.id
+        });
+        cachedChannels.push(shortcut.channel.id);
+    }
+    await messageResponse({
+        message: shortcut.message,
+        say: async data => {
+            return await web.chat.postMessage({
+                channel: shortcut.channel.id,
+                timestamp: shortcut.message.ts,
+                ...data
+            });
+        },
+        addReaction: web.reactions.add
+        // addReaction: async ({ name }) => {
+        //     return await web.chat.postMessage({
+        //         channel: shortcut.channel.id,
+        //         timestamp: shortcut.message.ts,
+        //         text: `:${name}:`
+        //     });
+        // }
+    });
 });
 
 (async () => {
