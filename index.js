@@ -162,7 +162,7 @@ app.message(async ({ message, say }) => {
         version: versions[language]
     });
 
-    await web.files.upload({
+    if (result.run.output) await web.files.upload({
         thread_ts: message.ts,
         content: result.run.output,
         channels: message.channel,
@@ -170,6 +170,7 @@ app.message(async ({ message, say }) => {
         filetype: 'text',
         initial_comment: `${result.language} v${result.version} exited with code \`${result.run.code}\``
     });
+    else say({ text: `${result.language} v${result.version} exited with code \`${result.run.code}\``, thread_ts: message.ts });
 
     web.reactions.remove({
         channel: message.channel,
