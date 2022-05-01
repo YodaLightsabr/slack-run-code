@@ -1,9 +1,27 @@
 {
-    "type": "module",
-    "dependencies": {
-        "@slack/bolt": "^3.11.0",
-        "@slack/web-api": "^6.7.1",
-        "node-fetch": "^3.2.4",
-        "piston-client": "^1.0.2"
-    }
+  "type": "module",
+  "dependencies": {
+    "@slack/bolt": "^3.11.0",
+    "@slack/web-api": "^6.7.1",
+    "node-fetch": "^3.2.4",
+    "piston-client": "^1.0.2"
+  },
+  "name": "run-code",
+  "description": "Run code in Slack",
+  "version": "1.0.0",
+  "main": "index.js",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/YodaLightsabr/slack-run-code.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/YodaLightsabr/slack-run-code/issues"
+  },
+  "homepage": "https://github.com/YodaLightsabr/slack-run-code#readme"
 }
