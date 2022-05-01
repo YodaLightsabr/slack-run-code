@@ -26,6 +26,8 @@ app.message(async ({ message, say }) => {
 
     let language, code;
 
+    if (message.thread_ts && (message.thread_ts != message.ts)) return console.log('Ignoring threaded message');
+
     if (message.subtype === 'channel_join') {
         console.log('Reacting to and ignoring channel join message');
 
