@@ -182,7 +182,7 @@ app.message(async ({ message, say }) => {
         await web.reactions.add({
             channel: message.channel,
             timestamp: message.ts,
-            name: welcome
+            name: react('welcome')
         });
         return;
     }
