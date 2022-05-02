@@ -1,3 +1,4 @@
+import { slackDecode } from './decode.js';
 import env from './env.js';
 import fetch from 'node-fetch';
 import piston from 'piston-client';
@@ -115,10 +116,10 @@ async function messageResponse ({ message, say, addReaction }) {
                 name: loading
             });
 
-            code = message.text.substring(
+            code = slackDecode(message.text.substring(
                 message.text.indexOf('```') + 3,
                 message.text.lastIndexOf('```')
-            );
+            ));
             language = message.text.match(/.*/)[0];
 
         } else {
