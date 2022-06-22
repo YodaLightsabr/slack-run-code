@@ -5,6 +5,11 @@ import piston from 'piston-client';
 import { reactions, react, staticReact } from './reactions.js';
 import SlackBolt from '@slack/bolt';
 import SlackWebAPI from '@slack/web-api';
+import express from 'express';
+
+const http = express();
+http.get('/', (req, res) => res.send('OK'));
+http.listen(process.env.PORT, () => console.log('HTTP server ready'));
 
 const { App } = SlackBolt;
 const { WebClient } = SlackWebAPI;
