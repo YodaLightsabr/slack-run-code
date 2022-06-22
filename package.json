@@ -4,7 +4,8 @@
     "@slack/bolt": "^3.11.0",
     "@slack/web-api": "^6.7.1",
     "node-fetch": "^3.2.4",
-    "piston-client": "^1.0.2"
+    "piston-client": "^1.0.2",
+    "express": "^4.18.1"
   },
   "name": "run-code",
   "description": "Run code in Slack",
